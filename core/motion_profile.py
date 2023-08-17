@@ -79,7 +79,7 @@ class MotionProfile:
         self.time_profile_x.append([0, KinematicState(0, start_vel * tangent_vector[0], start_acc * tangent_vector[0])])
         self.time_profile_y.append([0, KinematicState(0, start_vel * tangent_vector[1], start_acc * tangent_vector[1])])
 
-        self.heading_profile.append([0, math.radians(30)])
+        self.heading_profile.append([0, math.radians(0)])
 
         prev_time = 0
         current_time = 0

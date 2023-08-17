@@ -15,13 +15,13 @@ height = 900
 # path_tangents = [45, 45, 0, -45, 135]
 # tangent_coeff = 20
 
-path_points = [ [0,0], [20, 0], [20, 50], [-50, -20]]
-path_tangents = [0, 0, 0, 0]
-tangent_coeff = 50
+# path_points = [ [0,0], [20, 0], [20, 50], [-50, -20]]
+# path_tangents = [0, 0, 0, 0]
+# tangent_coeff = 50
 
-# path_points = [[36, -63], [30.0, -23], [27, 0.5], [45, -10.5], [58.6, -9.5]]
-# path_tangents = [-10, 120, 45, 0, 15]
-# tangent_coeff = 20
+path_points = [[36, -63], [30.0, -23], [27, 0.5], [45, -10.5], [58.6, -9.5]]
+path_tangents = [-10, 120, 45, 0, 15]
+tangent_coeff = 20
 
 # Basic constraints
 max_vel = 30
