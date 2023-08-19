@@ -2,7 +2,8 @@
 
 
 
-<center><img src="./images/simulator.gif" width="400" height="400" /><br>Robot trajectory running in the simulator</center>
+<center><img src="./images/simulator.gif" width="400" /><br>Robot trajectory running in the simulator</center>
+
 <br>
 
 This is primarily my attempt at replicating the awesome Road Runner library widely used for the First Tech Challenge robotics competition. Besides the obvious inspiration, this library does not  use any piece of code from the Road Runner library. Please check the *References & Credits* below for a complete list.
@@ -10,6 +11,8 @@ This is primarily my attempt at replicating the awesome Road Runner library wide
 This library is still in early development so at the moment there is no way to use it in any sensible way and it still lacks many, many features.
 
 For the moment, please check the [Jupyter Notebook](MotionPlanning.ipynb) I have created for a gentle introduction to this type of motion planning.
+
+You might also want to look at the [Java port](https://github.com/VladChira/PathPlannerJava) of this library.
 
 ## Requirements
 - Python 3.x 
