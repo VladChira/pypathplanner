@@ -1,6 +1,6 @@
 # A Python motion planning library for wheeled mobile robots
 
-<p align="center"><img src="./images/simulator.gif" width=500/></p>
+<p align="center"><img src="./images/simulator.gif" width="400"/></p>
 <p align="center">Robot trajectory running in the simulator</p>
 
 
