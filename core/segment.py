@@ -1,7 +1,7 @@
 from core.quintic_polynomial import *
 import math
 from scipy.integrate import quad
-from scipy import linalg
+from scipy import linalg, optimize
 
 coefficient_matrix = [
     [0, 0, 0, 0, 0, 1],
@@ -63,25 +63,34 @@ class Segment:
         len, _ = quad(self.unit_arc_length, 0, t)
         return len
 
-    # Calculates at which t in [0,1] we have a particular displacement
-    # Returns t(s)
-    # Inefficient at the moment but its fine
-    def parameter_at_displacement(self, s):
-        if not in_range(s, 0, self.length):
+    # Calculates at which t in [0,1] we have a particular displacement s0
+    # Returns t such that s(t) = s0
+    # Finds the root of the function s(t) - s0 = 0 using Brent's method
+    def parameter_at_displacement(self, s0):
+        if not in_range(s0, 0, self.length):
             raise ValueError('Incorrect displacement provided')
-        _, t = custom_trapezoidal(
-            self.unit_arc_length, 0, 1, 1000, s, eps=0.2)
-        if t == -1:
-            # The integration failed, as a last resort try integrating with more steps and higher tolerance
-            print('Integration failed, attempting to fix it')
-            _, t = custom_trapezoidal(
-                self.unit_arc_length, 0, 1, 3000, s, eps=0.2)
-            if t == -1:
-                print("This should not show. Check parameter_at function")
-                return 1
+        
+        def f(t):
+            return self.displacement_at_parameter(t) - s0
+        t = optimize.brentq(f, 0, 1)
+        if in_range(t, 0, 1, eps=0.01):
             return t
         else:
-            return t
+            raise ValueError("parameter_at_displacement failed")
+        
+        # _, t = custom_trapezoidal(
+        #     self.unit_arc_length, 0, 1, 1000, s, eps=0.2)
+        # if t == -1:
+        #     # The integration failed, as a last resort try integrating with more steps and higher tolerance
+        #     print('Integration failed, attempting to fix it')
+        #     _, t = custom_trapezoidal(
+        #         self.unit_arc_length, 0, 1, 3000, s, eps=0.2)
+        #     if t == -1:
+        #         print("This should not show. Check parameter_at function")
+        #         return 1
+        #     return t
+        # else:
+        #     return t
 
     # Calculates the coefficients of the polynomials given the
     # values and derivatives
@@ -108,6 +117,7 @@ class Segment:
 
 # Custom integration for stopping
 # Not ideal because its a poor algorithm
+# DEPRECATED
 def custom_trapezoidal(f, x0, xn, n, stop, eps=0.1):
     h = (xn - x0) / n
 
