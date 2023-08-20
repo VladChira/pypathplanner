@@ -46,6 +46,29 @@ def rect(screen, center, width, height, angle_rad, color):
 
     pygame.draw.lines(screen, color, True, vertices, 2)
 
+def draw_line(screen, p0, p1, thickness, color):
+    # https://stackoverflow.com/questions/30578068/pygame-draw-anti-aliased-thick-line
+    # The fact that this abomination is the 'best' way to draw a thick anti-aliased line is just...
+    # Bonus, it's also barely noticeably better
+    center_L1 = [(p0[0] + p1[0]) / 2.0, (p0[1] + p1[1]) / 2.0]
+    length = math.sqrt( (p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
+    angle = math.atan2(p0[1] - p1[1], p0[0] - p1[0])
+    UL = (center_L1[0] + (length/2.) * math.cos(angle) - (thickness/2.) * math.sin(angle),
+      center_L1[1] + (thickness/2.) * math.cos(angle) + (length/2.) * math.sin(angle))
+    UR = (center_L1[0] - (length/2.) * math.cos(angle) - (thickness/2.) * math.sin(angle),
+        center_L1[1] + (thickness/2.) * math.cos(angle) - (length/2.) * math.sin(angle))
+    BL = (center_L1[0] + (length/2.) * math.cos(angle) + (thickness/2.) * math.sin(angle),
+        center_L1[1] - (thickness/2.) * math.cos(angle) + (length/2.) * math.sin(angle))
+    BR = (center_L1[0] - (length/2.) * math.cos(angle) + (thickness/2.) * math.sin(angle),
+        center_L1[1] - (thickness/2.) * math.cos(angle) - (length/2.) * math.sin(angle))
+    pygame.gfxdraw.aapolygon(screen, (UL, UR, BR, BL), color)
+    pygame.gfxdraw.filled_polygon(screen, (UL, UR, BR, BL), color)
+
+
+def draw_path(screen, points):
+    for i in range(0, len(points) - 1):
+        draw_line(screen, points[i], points[i+1], 2, (255,255,255))
+
 def main():
     pygame.init()
     pygame.display.set_caption("Vlad's Path Planner")
@@ -61,7 +84,7 @@ def main():
 
     # Create and construct the motion profile based on path and constraints
     motion_profile = MotionProfile(path, max_vel, max_acc, max_ang_vel, max_ang_acc)
-    profile_x, profile_y = motion_profile.make_profile(start_vel=0, end_vel=0, num_points=200)
+    profile_x, profile_y = motion_profile.make_profile(start_vel=0, end_vel=0, num_points=int(path.length / 0.5))
     heading_profile = motion_profile.heading_profile
 
     # Get the velocity profiles for each axis
@@ -100,7 +123,8 @@ def main():
             x_path = [map_range(point, -field_len / 2, field_len / 2, 0, width) for point in x_position]
             y_path = [map_range(point, -field_len / 2, field_len / 2, 0, width) for point in y_position]
             points = list(zip(x_path, y_path))
-            pygame.draw.lines(screen, (255, 255, 255), False, points, 4)
+            draw_path(screen, points)
+            # pygame.draw.lines(screen, (255, 255, 255), False, points, 4)
 
             # Draw the knots by mapping real coordinates to pixel coordinates
             for point in path_points:
