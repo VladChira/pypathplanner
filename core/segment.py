@@ -72,6 +72,12 @@ class Segment:
         
         def f(t):
             return self.displacement_at_parameter(t) - s0
+        # Catch these edge cases before they reach the brentq solver
+        if s0 < 0.01:
+            return 0
+        if self.length - s0 < 0.01:
+            return 1
+        
         t = optimize.brentq(f, 0, 1)
         if in_range(t, 0, 1, eps=0.01):
             return t

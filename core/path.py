@@ -84,6 +84,13 @@ class Path:
         if len(points) != len(tangents):
             raise ValueError(
                 'The number of points must match the number of angles provided.')
+        if len(points) == 1:
+            raise ValueError("A path must contain at least two points")
+        
+        for i in range(len(points) - 1):
+            if points[i] == points[i-1]:
+                raise ValueError('Null segment error. Duplicate points found.')
+
         for i in range(len(points) - 1):
             # Make a segment between current_point and next_point
             # with given tangents
