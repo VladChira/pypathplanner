@@ -5,23 +5,18 @@ import time
 
 # path_points = [[0, 0], [10, 10], [30, 15], [60, 0], [30, 6]]
 # path_tangents = [45, 45, 0, -45, 135]
-# tangent_coeff = 20
 
 # path_points = [ [0,0], [20, 0], [20, 50], [-50, -20]]
 # path_tangents = [0, 0, 0, 0]
-# tangent_coeff = 50
 
 # path_points = [[0, 0], [20, 20], [40, 0]]
 # path_tangents = [-30, -90, 135]
-# tangent_coeff = 50
 
 path_points = [[36, -63], [30.0, -23], [27, 0.5], [45, -10.5], [58.6, -9.5]]
 path_tangents = [-10, 120, 45, 0, 15]
-tangent_coeff = 20
 
 # path_points = [[0, 0], [20, 20], [40, 0]]
 # path_tangents = [90, 0, -90]
-# tangent_coeff = 25
 
 # Basic constraints
 max_vel = 30
@@ -33,7 +28,6 @@ max_ang_acc = 3.14
 start_time = time.perf_counter()
 
 path = Path()
-path.manual_tangent_coefficient = tangent_coeff
 path.make_path(path_points, path_tangents)
 
 motion_profile = MotionProfile(path, max_vel, max_acc, max_ang_vel, max_ang_acc)

@@ -21,7 +21,6 @@ height = 900
 
 path_points = [[36, -63], [30.0, -23], [27, 0.5], [45, -10.5], [58.6, -9.5]]
 path_tangents = [-10, 120, 45, 0, 15]
-tangent_coeff = 20
 
 # Basic constraints
 max_vel = 30
@@ -79,7 +78,6 @@ def main():
     start_time = time.perf_counter()
     # Create and build the path
     path = Path()
-    path.manual_tangent_coefficient = tangent_coeff
     path.make_path(path_points, path_tangents)
 
     # Create and construct the motion profile based on path and constraints

@@ -1,12 +1,12 @@
 import math
 import numpy
 from core.segment import *
+from core.heading_interpolator import *
 
 class Path:
     def __init__(self):
         self.segments = []
         self.length = 0
-        self.manual_tangent_coefficient = 20
 
     def get_correct_segment(self, disp):
         # Immediately throw out absurd displacements
@@ -102,11 +102,22 @@ class Path:
             next_start_y = points[i+1][1]
             next_deriv_angle = tangents[i+1]
 
+            # Tangent length heuristic from this paper:
+            # Lau, Boris & Sprunk, Christoph & Burgard, Wolfram. (2009). Kinodynamic Motion Planning for Mobile Robots Using Splines.
+            tangent_length = 0
+            if i == 0:
+                tangent_length = 0.5 * math.dist(points[i], points[i+1])
+            elif i == (len(points) - 2):
+                tangent_length = 0.5 * math.dist(points[i-1], points[i])
+            else:
+                tangent_length = min(math.dist(points[i], points[i-1]), math.dist(points[i], points[i+1]))
+        
+
             new_segment = Segment()
-            new_segment.compute_coeffs([current_start_x, self.manual_tangent_coefficient * math.cos(math.radians(current_deriv_angle)), 0,
-                                        next_start_x, self.manual_tangent_coefficient * math.cos(math.radians(next_deriv_angle)), 0],
-                                       [current_start_y, self.manual_tangent_coefficient * math.sin(math.radians(current_deriv_angle)), 0,
-                                        next_start_y, self.manual_tangent_coefficient * math.sin(math.radians(next_deriv_angle)), 0])
+            new_segment.compute_coeffs([current_start_x, tangent_length * math.cos(math.radians(current_deriv_angle)), 0,
+                                        next_start_x, tangent_length * math.cos(math.radians(next_deriv_angle)), 0],
+                                       [current_start_y, tangent_length * math.sin(math.radians(current_deriv_angle)), 0,
+                                        next_start_y, tangent_length * math.sin(math.radians(next_deriv_angle)), 0])
             self.segments.append(new_segment)
 
             self.length += new_segment.length
@@ -139,3 +150,29 @@ def map_range(value, from_min, from_max, to_min, to_max):
     proportion = (value - from_min) / (from_max - from_min)
     mapped_value = to_min + proportion * (to_max - to_min)
     return mapped_value
+
+class PathBuilder:
+    def __init__(self, start_position, start_heading_deg):
+        self.start_positon = start_position
+        self.start_heading = start_heading_deg
+
+        self.points = []
+        self.headings = []
+        self.tangent_angles = []
+        self.path = Path()
+
+        self.points.append(start_position)
+        self.headings.append(start_heading_deg)
+        self.tangent_angles.append(start_heading_deg)
+    
+    def point_constant_heading(self, point, tangent_angle):
+        self.points.append(point)
+        self.headings.append(self.headings[-1])
+        self.tangent_angles.append(tangent_angle)
+        return self
+    
+    def build(self):
+        if len(self.points) == 0:
+            raise ValueError('Empty path error')
+        self.path.make_path(self.points, self.tangent_angles)
+        return self.path

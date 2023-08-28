@@ -12,7 +12,6 @@ path_points = [[0, 0], [20, 20], [40, 0]]
 path_tangents = [90, 0, -90]
 
 path = Path()
-path.manual_tangent_coefficient = 40
 path.make_path(path_points, path_tangents)
 
 figure, axis = plt.subplots(2, 2)
@@ -24,9 +23,8 @@ x_values, y_values = path.plot_points(resolution=100)
 
 # It's also possible to do it based on displacement
 # along the entire curve, like this:
-
-# for s in numpy.linspace(0, path.length, 50):
-#     p = path.first_deriv_at_displacement(s)
+# for s in np.linspace(0, path.length, 50):
+#     p = path.point_at_displacement(s)
 #     x_values.append(p[0])
 #     y_values.append(p[1])
 axis[0][0].plot(x_values, y_values)

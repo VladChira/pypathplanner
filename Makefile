@@ -12,3 +12,6 @@ run_example_path_manual:
 
 run_example_motion_profile:
 	python3 -m examples.motion_profile_example
+
+run_example_path_builder:
+	python3 -m examples.path_builder_example
