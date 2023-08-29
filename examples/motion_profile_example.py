@@ -12,8 +12,8 @@ import time
 # path_points = [[0, 0], [20, 20], [40, 0]]
 # path_tangents = [-30, -90, 135]
 
-path_points = [[36, -63], [30.0, -23], [27, 0.5], [45, -10.5], [58.6, -9.5]]
-path_tangents = [-10, 120, 45, 0, 15]
+# path_points = [[36, -63], [30.0, -23], [27, 0.5], [45, -10.5], [58.6, -9.5]]
+# path_tangents = [-10, 120, 45, 0, 15]
 
 # path_points = [[0, 0], [20, 20], [40, 0]]
 # path_tangents = [90, 0, -90]
@@ -24,11 +24,15 @@ max_acc = 40
 max_ang_vel = 3.14
 max_ang_acc = 3.14
 
-
 start_time = time.perf_counter()
 
-path = Path()
-path.make_path(path_points, path_tangents)
+path_builder = PathBuilder([36, -63], start_heading_deg=-10)
+path_builder.point_linear_heading([30.0, -23], tangent_angle_deg=120, heading_deg=120)
+path_builder.point_constant_heading([27, 0.5], tangent_angle_deg=45)
+path_builder.point_linear_heading([45, -10.5], tangent_angle_deg=0, heading_deg=0)
+path_builder.point_constant_heading([58.6, -9.5], tangent_angle_deg=15)
+path = path_builder.build()
+path_points = path_builder.points
 
 motion_profile = MotionProfile(path, max_vel, max_acc, max_ang_vel, max_ang_acc)
 time_profile_x, time_profile_y = motion_profile.make_profile(start_vel=0, end_vel=0, num_points=200)
@@ -97,8 +101,8 @@ axis[1][1].legend(['ẍ', 'ÿ'])
 axis[1][1].set_xlabel('time (s)')
 axis[1][1].set_ylabel('acceleration (in/s^2)')
 
-# ----- HEADING TODO-----
+# ----- HEADING-----
 heading = [math.degrees(h[1]) for h in heading_profile]
 axis[1][2].plot(t, heading)
-
+axis[1][2].set_title('Heading (deg)')
 plt.show()

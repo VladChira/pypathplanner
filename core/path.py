@@ -7,6 +7,7 @@ class Path:
     def __init__(self):
         self.segments = []
         self.length = 0
+        self.skip_headings = False
 
     def get_correct_segment(self, disp):
         # Immediately throw out absurd displacements
@@ -69,23 +70,31 @@ class Path:
         return (rt2 / (numpy.linalg.norm(rt1) ** 2)) - (rt1 * rt2 * rt1) / (numpy.linalg.norm(rt1) ** 4)
     
     def heading_at_displacement(self, disp):
-        # # Find out in which segment we are
-        # current_segment, relative_disp = self.get_correct_segment(disp)
-        # t = current_segment.parameter_at_displacement(relative_disp)
-        # return current_segment.heading_interpolator.heading_at_parameter(t)
-        return 0
+        # Find out in which segment we are
+        current_segment, relative_disp = self.get_correct_segment(disp)
+        t = current_segment.parameter_at_displacement(relative_disp)
+        return current_segment.heading_interpolator.heading_at_parameter(t)
 
     # Constructs a path of len(points)-1 segments
     # that passes through all points in the array.
     # All derivatives are given manually.
     # First derivative: in angle form
     # Second derivative: assume 0 for now
-    def make_path(self, points, tangents):
+    def make_path(self, points, tangents, headings=[]):
         if len(points) != len(tangents):
             raise ValueError(
-                'The number of points must match the number of angles provided.')
+                'The number of points must match the number of tangent angles provided.')
         if len(points) == 1:
             raise ValueError("A path must contain at least two points")
+        
+        if len(headings) == 0:
+            self.skip_headings = True
+        elif len(points) != len(headings):
+            raise ValueError('The number of points must match the number of heading angles provided')
+        
+        self.points = points
+        self.tangents = tangents
+        self.headings = headings
         
         for i in range(len(points) - 1):
             if points[i] == points[i-1]:
@@ -112,12 +121,17 @@ class Path:
             else:
                 tangent_length = min(math.dist(points[i], points[i-1]), math.dist(points[i], points[i+1]))
         
-
             new_segment = Segment()
             new_segment.compute_coeffs([current_start_x, tangent_length * math.cos(math.radians(current_deriv_angle)), 0,
                                         next_start_x, tangent_length * math.cos(math.radians(next_deriv_angle)), 0],
                                        [current_start_y, tangent_length * math.sin(math.radians(current_deriv_angle)), 0,
                                         next_start_y, tangent_length * math.sin(math.radians(next_deriv_angle)), 0])
+            
+            if not self.skip_headings:
+                new_segment.heading_interpolator = HeadingInterpolator(new_segment, math.radians(headings[i][0]), math.radians(headings[i+1][0]), headings[i+1][1])
+            else:
+                new_segment.heading_interpolator = HeadingInterpolator(new_segment, 0, 0, InterpolatorType.CONSTANT)
+                
             self.segments.append(new_segment)
 
             self.length += new_segment.length
@@ -162,17 +176,24 @@ class PathBuilder:
         self.path = Path()
 
         self.points.append(start_position)
-        self.headings.append(start_heading_deg)
+        # The interp type does not matter for the first point
+        self.headings.append((start_heading_deg, InterpolatorType.CONSTANT))
         self.tangent_angles.append(start_heading_deg)
     
-    def point_constant_heading(self, point, tangent_angle):
+    def point_constant_heading(self, point, tangent_angle_deg):
         self.points.append(point)
-        self.headings.append(self.headings[-1])
-        self.tangent_angles.append(tangent_angle)
+        self.headings.append((self.headings[-1][0], InterpolatorType.CONSTANT))
+        self.tangent_angles.append(tangent_angle_deg)
+        return self
+    
+    def point_linear_heading(self, point, tangent_angle_deg, heading_deg):
+        self.points.append(point)
+        self.headings.append((heading_deg, InterpolatorType.LINEAR))
+        self.tangent_angles.append(tangent_angle_deg)
         return self
     
     def build(self):
         if len(self.points) == 0:
             raise ValueError('Empty path error')
-        self.path.make_path(self.points, self.tangent_angles)
+        self.path.make_path(self.points, self.tangent_angles, self.headings)
         return self.path

@@ -1,8 +1,11 @@
+from os import environ
+environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+
 import pygame
 import pygame.gfxdraw
 import time
 import numpy as np
-from scipy.integrate import cumtrapz
+from scipy.integrate import cumulative_trapezoid
 
 from core.path import *
 from core.motion_profile import *
@@ -19,8 +22,8 @@ height = 900
 # path_tangents = [0, 0, 0, 0]
 # tangent_coeff = 50
 
-path_points = [[36, -63], [30.0, -23], [27, 0.5], [45, -10.5], [58.6, -9.5]]
-path_tangents = [-10, 120, 45, 0, 15]
+# path_points = [[36, -63], [30.0, -23], [27, 0.5], [45, -10.5], [58.6, -9.5]]
+# path_tangents = [-10, 120, 45, 0, 15]
 
 # Basic constraints
 max_vel = 30
@@ -32,6 +35,7 @@ robot_width = 18
 robot_height = 18
 field_len = 142
 
+
 def rect(screen, center, width, height, angle_rad, color):
     cos_theta = math.cos(angle_rad)
     sin_theta = math.sin(angle_rad)
@@ -42,31 +46,8 @@ def rect(screen, center, width, height, angle_rad, color):
         (center[0] - width * cos_theta + height * sin_theta, center[1] - width * sin_theta - height * cos_theta),
         (center[0] + width * cos_theta + height * sin_theta, center[1] + width * sin_theta - height * cos_theta)
     ]
-
     pygame.draw.lines(screen, color, True, vertices, 2)
 
-def draw_line(screen, p0, p1, thickness, color):
-    # https://stackoverflow.com/questions/30578068/pygame-draw-anti-aliased-thick-line
-    # The fact that this abomination is the 'best' way to draw a thick anti-aliased line is just...
-    # Bonus, it's also barely noticeably better
-    center_L1 = [(p0[0] + p1[0]) / 2.0, (p0[1] + p1[1]) / 2.0]
-    length = math.sqrt( (p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
-    angle = math.atan2(p0[1] - p1[1], p0[0] - p1[0])
-    UL = (center_L1[0] + (length/2.) * math.cos(angle) - (thickness/2.) * math.sin(angle),
-      center_L1[1] + (thickness/2.) * math.cos(angle) + (length/2.) * math.sin(angle))
-    UR = (center_L1[0] - (length/2.) * math.cos(angle) - (thickness/2.) * math.sin(angle),
-        center_L1[1] + (thickness/2.) * math.cos(angle) - (length/2.) * math.sin(angle))
-    BL = (center_L1[0] + (length/2.) * math.cos(angle) + (thickness/2.) * math.sin(angle),
-        center_L1[1] - (thickness/2.) * math.cos(angle) + (length/2.) * math.sin(angle))
-    BR = (center_L1[0] - (length/2.) * math.cos(angle) + (thickness/2.) * math.sin(angle),
-        center_L1[1] - (thickness/2.) * math.cos(angle) - (length/2.) * math.sin(angle))
-    pygame.gfxdraw.aapolygon(screen, (UL, UR, BR, BL), color)
-    pygame.gfxdraw.filled_polygon(screen, (UL, UR, BR, BL), color)
-
-
-def draw_path(screen, points):
-    for i in range(0, len(points) - 1):
-        draw_line(screen, points[i], points[i+1], 2, (255,255,255))
 
 def main():
     pygame.init()
@@ -77,8 +58,13 @@ def main():
     
     start_time = time.perf_counter()
     # Create and build the path
-    path = Path()
-    path.make_path(path_points, path_tangents)
+    path_builder = PathBuilder([36, -63.0], start_heading_deg=-10)
+    path_builder.point_linear_heading([30.0, -23], tangent_angle_deg=120, heading_deg=120)
+    path_builder.point_linear_heading([27, 0.5], tangent_angle_deg=45, heading_deg=45)
+    path_builder.point_constant_heading([45, -10.5], tangent_angle_deg=0)
+    path_builder.point_constant_heading([58.6, -9.5], tangent_angle_deg=15)
+    path = path_builder.build()
+    path_points = path_builder.points
 
     # Create and construct the motion profile based on path and constraints
     motion_profile = MotionProfile(path, max_vel, max_acc, max_ang_vel, max_ang_acc)
@@ -92,8 +78,8 @@ def main():
 
     # Integrate them to obtain relative positions for each axis
     # The start position is added to the relative positions
-    x_position = [path_points[0][0] + x_offset for x_offset in cumtrapz(velocities_x, t, initial=0)]
-    y_position = [path_points[0][1] + y_offset for y_offset in cumtrapz(velocities_y, t, initial=0)]
+    x_position = [path_points[0][0] + x_offset for x_offset in cumulative_trapezoid(velocities_x, t, initial=0)]
+    y_position = [path_points[0][1] + y_offset for y_offset in cumulative_trapezoid(velocities_y, t, initial=0)]
     # Create the interpolated lookup tables for the position
     lut_x = InterpLUT(t, x_position)
     lut_y = InterpLUT(t, y_position)
@@ -121,8 +107,7 @@ def main():
             x_path = [map_range(point, -field_len / 2, field_len / 2, 0, width) for point in x_position]
             y_path = [map_range(point, -field_len / 2, field_len / 2, 0, width) for point in y_position]
             points = list(zip(x_path, y_path))
-            draw_path(screen, points)
-            # pygame.draw.lines(screen, (255, 255, 255), False, points, 4)
+            pygame.draw.lines(screen, (255, 255, 255), False, points, 4)
 
             # Draw the knots by mapping real coordinates to pixel coordinates
             for point in path_points:
@@ -142,10 +127,15 @@ def main():
             x = lut_x.lookup(rel_t)
             y = lut_y.lookup(rel_t)
             angle = lut_heading.lookup(rel_t)
+
             # Calculate the pixel coordinates and draw the rectangle
             pixel_point_x = map_range(x, -field_len / 2, field_len / 2, 0, width)
             pixel_point_y = map_range(y, -field_len / 2, field_len / 2, 0, height)
             rect(screen, (pixel_point_x, pixel_point_y), robot_width / 2 * (width / field_len), robot_height / 2 * (height / field_len), math.radians(angle), (255, 255, 255))
+
+            # Display a progress indicator of the path
+            # For now, just print percentage
+            # print('Progress: ' + str(map_range(rel_t, 0, motion_profile.duration, 0, 100)) + '%')
 
         pygame.display.update()
 

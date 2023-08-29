@@ -1,4 +1,5 @@
 from enum import Enum
+import math
 
 class InterpolatorType(Enum):
         CONSTANT = 1
@@ -29,7 +30,7 @@ class HeadingInterpolator:
         if self.type == InterpolatorType.TANGENT:
             # The heading will be tangent to the path
             # TODO: how does it even work?
-            # tangent_vector = self.segment.first_deriv_at_displacement(s)
+            # tangent_vector = self.segment.first_deriv_at_parameter(t)
             # return math.atan2(tangent_vector[1], tangent_vector[0]) + self.start_angle_rad
             pass
 
