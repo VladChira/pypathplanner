@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: pypathplanner
+  description: >
+    A path and motion planning library for wheeled mobile robots
+  tags:
+    - python
+    - robotics
+  annotations:
+    github.com/project-slug: VladChira/pypathplanner
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: library
+  lifecycle: experimental
+  owner: VladChira
